@@ -96,18 +96,9 @@ Tests run inside a `mktemp -d` scratch directory and never touch your real
 `~/.codex`. One test greps the shipped files for absolute home paths; if it
 fails, something machine-specific leaked in.
 
-## Pre-open-source review checklist
+## License
 
-This repo is private until the items below are done.
-
-- [x] **License: Apache-2.0.** `LICENSE` file added and `package.json` updated.
-- [ ] **Read every file once more before flipping public.** The scrub gate
-      checks paths and identifiers, not judgment.
-- [ ] **Keep or trim the scaffolding.** `CLAUDE.md` mentions the beads issue
-      tracker, which this repo does not ship. Either keep the short note or
-      remove it. `.beads/` is gitignored and was never committed.
-- [ ] **Decide whether to ship the Claude Code variant** of the same skill
-      alongside this one, or leave this repo Codex-only.
+Apache-2.0. See [LICENSE](LICENSE).
 
 ## Related
 
