@@ -93,8 +93,7 @@ fails, something machine-specific leaked in.
 
 This repo is private until the items below are done.
 
-- [ ] **Choose a license.** `package.json` says `UNLICENSED` and there is no
-      `LICENSE` file. Sibling skill repos use MIT or Apache-2.0.
+- [x] **License: Apache-2.0.** `LICENSE` file added and `package.json` updated.
 - [ ] **Read every file once more before flipping public.** The scrub gate
       checks paths and identifiers, not judgment.
 - [ ] **Keep or trim the scaffolding.** `CLAUDE.md` mentions the beads issue

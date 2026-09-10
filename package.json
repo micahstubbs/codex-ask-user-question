@@ -5,5 +5,5 @@
   "scripts": {
     "test": "bash tests/run-tests.sh"
   },
-  "license": "UNLICENSED"
+  "license": "Apache-2.0"
 }
