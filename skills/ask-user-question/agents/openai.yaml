@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ask User Question"
+  short_description: "Structured, option-based clarifying questions via request_user_input"
+  default_prompt: "Use $ask-user-question for this task."
