@@ -1,0 +1,9 @@
+{
+  "name": "codex-ask-user-question",
+  "version": "1.0.0",
+  "description": "A Codex CLI skill that ports Claude Code's AskUserQuestion interview pattern onto request_user_input",
+  "scripts": {
+    "test": "bash tests/run-tests.sh"
+  },
+  "license": "UNLICENSED"
+}
