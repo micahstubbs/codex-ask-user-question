@@ -1,92 +1,62 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code and Codex agents working in this repository.
 
+## What this repo is
 
-### Using bv as an AI sidecar
+`codex-ask-user-question` is a single Codex CLI skill that ports Claude Code's
+`AskUserQuestion` interview pattern onto Codex's native `request_user_input`
+tool, plus an installer, a feature-flag helper, and tests. It is headed for
+public release. Keep it that way: no private paths, no machine-specific
+assumptions, no references to skills or tooling that do not ship here or
+install from here.
 
-bv is a graph-aware triage engine for Beads projects (.beads/beads.jsonl). Instead of parsing JSONL or hallucinating graph traversal, use robot flags for deterministic, dependency-aware outputs with precomputed metrics (PageRank, betweenness, critical path, cycles, HITS, eigenvector, k-core).
+## Issue tracking
 
-**Scope boundary:** bv handles *what to work on* (triage, priority, planning). For agent-to-agent coordination (messaging, work claiming, file reservations), use [MCP Agent Mail](https://github.com/Dicklesworthstone/mcp_agent_mail).
+The author tracks work on this repo with the
+[beads](https://github.com/selfcuration/beads_rust) issue tracker (`br`).
+It is not required to use or contribute to the skill. `.beads/` is gitignored
+on purpose: the tracker's export embeds absolute source paths, which would
+leak a home directory into a public tree.
 
-**⚠️ CRITICAL: Use ONLY `--robot-*` flags. Bare `bv` launches an interactive TUI that blocks your session.**
+## Conventions
 
-#### The Workflow: Start With Triage
+- **Markdown, YAML, and bash only. No runtime dependencies.** `package.json`
+  exists for `npm test` and metadata; never add npm dependencies.
+- **The SKILL.md front-matter `name` must equal its directory name.** Codex
+  resolves skills by that name. There is a test for this.
+- **`agents/openai.yaml` is the skill manifest.** Its `short_description` is
+  what the skill picker shows; keep it a complete sentence under 80
+  characters. A test checks that it is not cut off mid-quote.
+- **The skill prefers the native tool.** Any edit to SKILL.md must keep
+  `request_user_input` as the default and the Markdown fallback as the
+  exception. Do not describe `AskUserQuestion` as something Codex has.
+- **Deterministic logic goes in `scripts/`, judgment goes in SKILL.md.**
+- **Installers never remove what they did not install.** `install.sh` checks
+  symlink targets and byte-identity before removing anything. The enable
+  script never edits `config.toml` directly; it shells out to
+  `codex features enable` and only after `--check` says the flag is off.
+- **Guard non-zero exits under `set -euo pipefail`.** `grep`, `diff`, and
+  `awk` exit 1 on legitimate outcomes.
+- Support bash 4.0+ and both GNU and BSD/macOS userland.
 
-**`bv --robot-triage` is your single entry point.** It returns everything you need in one call:
-- `quick_ref`: at-a-glance counts + top 3 picks
-- `recommendations`: ranked actionable items with scores, reasons, unblock info
-- `quick_wins`: low-effort high-impact items
-- `blockers_to_clear`: items that unblock the most downstream work
-- `project_health`: status/type/priority distributions, graph metrics
-- `commands`: copy-paste shell commands for next steps
+## Keeping copies in step
 
-bv --robot-triage        # THE MEGA-COMMAND: start here
-bv --robot-next          # Minimal: just the single top pick + claim command
+The same SKILL.md is also vendored by its author into a personal Codex config
+and a superpowers fork. When editing the skill here, the other copies need the
+same change; this repo is the canonical source.
 
-#### Other Commands
+## Before committing
 
-**Planning:**
-| Command | Returns |
-|---------|---------|
-| `--robot-plan` | Parallel execution tracks with `unblocks` lists |
-| `--robot-priority` | Priority misalignment detection with confidence |
+```bash
+./tests/run-tests.sh     # must be 0 failures
+```
 
-**Graph Analysis:**
-| Command | Returns |
-|---------|---------|
-| `--robot-insights` | Full metrics: PageRank, betweenness, HITS (hubs/authorities), eigenvector, critical path, cycles, k-core, articulation points, slack |
-| `--robot-label-health` | Per-label health: `health_level` (healthy\|warning\|critical), `velocity_score`, `staleness`, `blocked_count` |
-| `--robot-label-flow` | Cross-label dependency: `flow_matrix`, `dependencies`, `bottleneck_labels` |
-| `--robot-label-attention [--attention-limit=N]` | Attention-ranked labels by: (pagerank × staleness × block_impact) / velocity |
+Tests are plain bash with no framework. Anything touching the filesystem must
+work inside a `mktemp -d` scratch directory. `install.sh` and the enable
+script both take a config location (argument or `CODEX_HOME`) specifically
+so tests can point them somewhere harmless.
 
-**History & Change Tracking:**
-| Command | Returns |
-|---------|---------|
-| `--robot-history` | Bead-to-commit correlations: `stats`, `histories` (per-bead events/commits/milestones), `commit_index` |
-| `--robot-diff --diff-since <ref>` | Changes since ref: new/closed/modified issues, cycles introduced/resolved |
-
-**Other Commands:**
-| Command | Returns |
-|---------|---------|
-| `--robot-burndown <sprint>` | Sprint burndown, scope changes, at-risk items |
-| `--robot-forecast <id\|all>` | ETA predictions with dependency-aware scheduling |
-| `--robot-alerts` | Stale issues, blocking cascades, priority mismatches |
-| `--robot-suggest` | Hygiene: duplicates, missing deps, label suggestions, cycle breaks |
-| `--robot-graph [--graph-format=json\|dot\|mermaid]` | Dependency graph export |
-| `--export-graph <file.html>` | Self-contained interactive HTML visualization |
-
-#### Scoping & Filtering
-
-bv --robot-plan --label backend              # Scope to label's subgraph
-bv --robot-insights --as-of HEAD~30          # Historical point-in-time
-bv --recipe actionable --robot-plan          # Pre-filter: ready to work (no blockers)
-bv --recipe high-impact --robot-triage       # Pre-filter: top PageRank scores
-bv --robot-triage --robot-triage-by-track    # Group by parallel work streams
-bv --robot-triage --robot-triage-by-label    # Group by domain
-
-#### Understanding Robot Output
-
-**All robot JSON includes:**
-- `data_hash` — Fingerprint of source beads.jsonl (verify consistency across calls)
-- `status` — Per-metric state: `computed|approx|timeout|skipped` + elapsed ms
-- `as_of` / `as_of_commit` — Present when using `--as-of`; contains ref and resolved SHA
-
-**Two-phase analysis:**
-- **Phase 1 (instant):** degree, topo sort, density — always available immediately
-- **Phase 2 (async, 500ms timeout):** PageRank, betweenness, HITS, eigenvector, cycles — check `status` flags
-
-**For large graphs (>500 nodes):** Some metrics may be approximated or skipped. Always check `status`.
-
-#### jq Quick Reference
-
-bv --robot-triage | jq '.quick_ref'                        # At-a-glance summary
-bv --robot-triage | jq '.recommendations[0]'               # Top recommendation
-bv --robot-plan | jq '.plan.summary.highest_impact'        # Best unblock target
-bv --robot-insights | jq '.status'                         # Check metric readiness
-bv --robot-insights | jq '.Cycles'                         # Circular deps (must fix!)
-bv --robot-label-health | jq '.results.labels[] | select(.health_level == "critical")'
-
-**Performance:** Phase 1 instant, Phase 2 async (500ms timeout). Prefer `--robot-plan` over `--robot-insights` when speed matters. Results cached by data hash.
-
-Use bv instead of parsing beads.jsonl—it computes PageRank, critical paths, cycles, and parallel tracks deterministically.
+One test greps the shipped files for absolute home paths. If it fails,
+something machine-specific leaked in; parameterize it rather than deleting
+the test.
