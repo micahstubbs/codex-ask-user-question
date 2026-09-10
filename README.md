@@ -4,22 +4,29 @@ A [Codex CLI](https://github.com/openai/codex) skill that ports the
 [Claude Code](https://claude.com/claude-code) `AskUserQuestion` interview
 pattern onto Codex's native `request_user_input` tool.
 
+Say something like...
+
 ```console
 interview me about the caching layer
 ```
 
-Say that, or "ask me questions about ...", and Codex explores the repo first,
-then asks one structured question at a time: a short header, two to four
-mutually exclusive options with a one-line tradeoff each, the recommended
-option first. It waits for your answer before asking the next one, and stops
+... or "ask me questions about ...", and the Codex agent will explore your repo,
+then ask one structured question at a time with: 
+
+- a short header,
+- two to four mutually exclusive options with a one-line tradeoff each,
+- showing the recommended option first.
+  
+The skill waits for your answer before asking the next one, and stops
 when there is enough clarity to plan or build.
 
 ## Why
 
-Codex has no `AskUserQuestion`. It has `request_user_input`, which renders
-the same kind of selectable-option prompt but is only offered in Plan mode by
-default. Left to itself the model tends to fall back to a wall of prose
-questions, or to skip asking and guess. This skill does three things:
+While Codex has no `AskUserQuestion` like Claude Code, it _does_ have 
+`request_user_input`, which renders the same kind of selectable-option 
+prompt but is only offered in Plan mode by default. Left to itself the 
+model tends to fall back to a wall of prose questions, or to skip asking 
+and guess. This skill does three things:
 
 - **Prefers the native tool whenever it is listed**, regardless of what the
   collaboration mode is called, and tells the model not to infer that the
