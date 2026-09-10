@@ -13,9 +13,9 @@ interview me about the caching layer
 ... or "ask me questions about ...", and the Codex agent will explore your repo,
 then ask one structured question at a time with: 
 
-- a short header,
-- two to four mutually exclusive options with a one-line tradeoff each,
-- showing the recommended option first.
+- a short header
+- two to four mutually exclusive options (each with a one-line tradeoff statement),
+- a recommended option that is shown first
   
 The skill waits for your answer before asking the next one, and stops
 when there is enough clarity to plan or build.
